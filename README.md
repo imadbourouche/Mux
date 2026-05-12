@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="Mux" width="640" />
+  <img src="assets/logo.png" alt="Mux" width="440" />
 </p>
 
 # Mux
