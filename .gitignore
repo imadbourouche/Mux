@@ -1,0 +1,9 @@
+node_modules
+web/dist
+dev-dashboard
+data/services.json
+data/services.json.tmp
+.next
+*.log
+.DS_Store
+
