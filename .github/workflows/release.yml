@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "yarn"
+          cache-dependency-path: web/yarn.lock
+
+      - name: Install yarn (v1)
+        run: npm install -g yarn@1
+
+      - name: Build SPA + cross-compile macOS binaries
+        run: |
+          cd web && yarn install --frozen-lockfile && cd ..
+          make release VERSION=${{ github.ref_name }}
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          shasum -a 256 mux-* > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "Mux ${{ github.ref_name }}" \
+            --generate-notes \
+            dist/mux-darwin-arm64 \
+            dist/mux-darwin-amd64 \
+            dist/SHA256SUMS
