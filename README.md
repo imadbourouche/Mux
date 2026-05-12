@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="Mux" width="440" />
+  <img src="assets/logo.png" alt="Mux" width="400" />
 </p>
 
 # Mux
@@ -9,6 +9,10 @@ service runs under a PTY, with its logs streamed over WebSocket to a React UI.
 Configure args + env vars per service, switch between named profiles, send
 input to the running process (e.g. sudo passwords or Quarkus `r`/`q`), open
 the project in VSCode or Terminal, and detect listening ports automatically.
+
+<br>
+
+![Screenshot](./assets/screenshot.png)
 
 ## Requirements
 
