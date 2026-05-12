@@ -1,3 +1,5 @@
+import { useEscKey } from "../hooks/useEscKey";
+
 type Props = {
   title: string;
   message: string;
@@ -17,6 +19,7 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: Props) {
+  useEscKey(onCancel);
   return (
     <div className="modal-backdrop" onClick={onCancel}>
       <div className="modal" onClick={(e) => e.stopPropagation()} style={{ width: 420 }}>

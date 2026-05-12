@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Service } from "../lib/types";
+import { useEscKey } from "../hooks/useEscKey";
 
 type Props = {
   services: Service[];
@@ -8,6 +9,7 @@ type Props = {
 };
 
 export function QuickSwitch({ services, onPick, onCancel }: Props) {
+  useEscKey(onCancel);
   const [q, setQ] = useState("");
   const [idx, setIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);

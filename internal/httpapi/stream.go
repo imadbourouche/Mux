@@ -6,7 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 
-	"dev-dashboard/internal/supervisor"
+	"mux/internal/supervisor"
 )
 
 var upgrader = websocket.Upgrader{

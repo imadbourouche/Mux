@@ -1,3 +1,5 @@
+import { useEscKey } from "../hooks/useEscKey";
+
 type Source<T> = { id: string; name: string; items: T[] };
 
 type Props<T> = {
@@ -9,6 +11,7 @@ type Props<T> = {
 };
 
 export function CopyFromDialog<T>({ title, itemLabel, sources, onApply, onCancel }: Props<T>) {
+  useEscKey(onCancel);
   return (
     <div className="modal-backdrop" onClick={onCancel}>
       <div className="modal" onClick={(e) => e.stopPropagation()} style={{ width: 520 }}>

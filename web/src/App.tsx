@@ -5,9 +5,11 @@ import { AddServiceForm } from "./components/AddServiceForm";
 import { QuickSwitch } from "./components/QuickSwitch";
 import { ImportDialog } from "./components/ImportDialog";
 import { ConfirmDialog } from "./components/ConfirmDialog";
+import { SettingsDialog } from "./components/SettingsDialog";
 import { api } from "./lib/api";
 import { useTheme } from "./hooks/useTheme";
 import { useNotifications } from "./hooks/useNotifications";
+import { useShortcuts, matches } from "./hooks/useShortcuts";
 import type { Service } from "./lib/types";
 
 const SIDEBAR_WIDTH_KEY = "dev-dashboard-sidebar-width";
@@ -20,7 +22,9 @@ export function App() {
   const [importing, setImporting] = useState(false);
   const [confirmExport, setConfirmExport] = useState(false);
   const [quickSwitchOpen, setQuickSwitchOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [theme, setTheme] = useTheme();
+  const { bindings, update: updateBinding, reset: resetBindings } = useShortcuts();
 
   const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
     const stored = Number(localStorage.getItem(SIDEBAR_WIDTH_KEY));
@@ -75,7 +79,6 @@ export function App() {
   }
 
   async function onReorder(ids: string[]) {
-    // optimistic
     setServices((prev) => {
       const map = new Map(prev.map((s) => [s.id, s] as const));
       return ids.map((id) => map.get(id)!).filter(Boolean);
@@ -101,28 +104,36 @@ export function App() {
     load();
   }
 
-  // keyboard shortcuts
+  // global keyboard shortcuts (only when not in a record-mode flow inside ShortcutsDialog)
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      const meta = e.metaKey || e.ctrlKey;
-      if (!meta) return;
-      const target = e.target as HTMLElement | null;
-      const inEditable =
-        target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
-      if (e.key.toLowerCase() === "k") {
+      // If the shortcuts dialog is recording, it owns the keyboard.
+      if ((window as unknown as { __recordingShortcut?: boolean }).__recordingShortcut) return;
+      if (matches(e, bindings.quickSwitch)) {
         e.preventDefault();
         setQuickSwitchOpen((v) => !v);
         return;
       }
-      if (inEditable) return;
-      if (e.key.toLowerCase() === "r" && selectedId) {
+      if (matches(e, bindings.shortcutsHelp)) {
+        e.preventDefault();
+        setSettingsOpen((v) => !v);
+        return;
+      }
+      if (!selectedId) return;
+      if (matches(e, bindings.startFocused)) {
+        e.preventDefault();
+        api.start(selectedId).then(load);
+      } else if (matches(e, bindings.restartFocused)) {
         e.preventDefault();
         api.restart(selectedId).then(load);
+      } else if (matches(e, bindings.stopFocused)) {
+        e.preventDefault();
+        api.stop(selectedId).then(load);
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedId, load]);
+  }, [bindings, selectedId, load]);
 
   const gridCols = sidebarCollapsed ? "40px 1fr" : `${sidebarWidth}px 1fr`;
 
@@ -143,6 +154,7 @@ export function App() {
         onReorder={onReorder}
         onExport={() => setConfirmExport(true)}
         onImport={() => setImporting(true)}
+        onShowSettings={() => setSettingsOpen(true)}
         theme={theme}
         onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
       />
@@ -156,7 +168,7 @@ export function App() {
         />
       ) : (
         <section className="detail">
-          <div className="empty">Select or add a service · ⌘K to switch</div>
+          <div className="empty">Select or add a service</div>
         </section>
       )}
       {adding && <AddServiceForm onCancel={() => setAdding(false)} onCreate={onCreate} />}
@@ -180,6 +192,14 @@ export function App() {
             setQuickSwitchOpen(false);
           }}
           onCancel={() => setQuickSwitchOpen(false)}
+        />
+      )}
+      {settingsOpen && (
+        <SettingsDialog
+          bindings={bindings}
+          onChange={updateBinding}
+          onReset={resetBindings}
+          onCancel={() => setSettingsOpen(false)}
         />
       )}
     </div>

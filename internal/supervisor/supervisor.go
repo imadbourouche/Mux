@@ -13,7 +13,7 @@ import (
 
 	"github.com/creack/pty"
 
-	"dev-dashboard/internal/store"
+	"mux/internal/store"
 )
 
 type Status string

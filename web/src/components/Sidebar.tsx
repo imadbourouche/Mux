@@ -19,6 +19,7 @@ type Props = {
   onReorder: (orderedIds: string[]) => void;
   onExport: () => void;
   onImport: () => void;
+  onShowSettings: () => void;
   theme: Theme;
   onToggleTheme: () => void;
 };
@@ -42,6 +43,7 @@ export function Sidebar(props: Props) {
     onReorder,
     onExport,
     onImport,
+    onShowSettings,
     theme,
     onToggleTheme,
   } = props;
@@ -49,6 +51,38 @@ export function Sidebar(props: Props) {
   const draggingRef = useRef(false);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const dragIdRef = useRef<string | null>(null);
+  const [armed, setArmed] = useState<null | "start" | "stop">(null);
+  const armTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (armTimerRef.current) window.clearTimeout(armTimerRef.current);
+    };
+  }, []);
+
+  function armConfirm(which: "start" | "stop") {
+    setArmed(which);
+    if (armTimerRef.current) window.clearTimeout(armTimerRef.current);
+    armTimerRef.current = window.setTimeout(() => setArmed(null), 3000);
+  }
+  function handleStartAll() {
+    if (armed === "start") {
+      if (armTimerRef.current) window.clearTimeout(armTimerRef.current);
+      setArmed(null);
+      onStartAll();
+    } else {
+      armConfirm("start");
+    }
+  }
+  function handleStopAll() {
+    if (armed === "stop") {
+      if (armTimerRef.current) window.clearTimeout(armTimerRef.current);
+      setArmed(null);
+      onStopAll();
+    } else {
+      armConfirm("stop");
+    }
+  }
 
   useEffect(() => {
     function onMove(e: MouseEvent) {
@@ -125,8 +159,18 @@ export function Sidebar(props: Props) {
     <aside className="sidebar" style={{ width }}>
       <div className="sidebar-header">
         <div className="row-between">
-          <h1>dev-dashboard</h1>
+          <div className="brand">
+            <img src="/favicon.svg" alt="" className="brand-logo" />
+            <h1>Mux</h1>
+          </div>
           <div style={{ display: "flex", gap: 4 }}>
+            <button
+              className="icon-btn settings-btn"
+              onClick={onShowSettings}
+              title="Settings (⌥/)"
+            >
+              ⚙
+            </button>
             <button className="icon-btn" onClick={onToggleTheme} title="Toggle theme">
               {theme === "dark" ? "☀" : "☾"}
             </button>
@@ -136,8 +180,18 @@ export function Sidebar(props: Props) {
           </div>
         </div>
         <div className="sidebar-actions">
-          <button onClick={onStartAll}>Start all</button>
-          <button onClick={onStopAll}>Stop all</button>
+          <button
+            className={`start-all ${armed === "start" ? "armed" : ""}`}
+            onClick={handleStartAll}
+          >
+            {armed === "start" ? "Sure to start all?" : "Start all"}
+          </button>
+          <button
+            className={`stop-all ${armed === "stop" ? "armed" : ""}`}
+            onClick={handleStopAll}
+          >
+            {armed === "stop" ? "Sure to stop all?" : "Stop all"}
+          </button>
         </div>
         <button className="primary" onClick={onAdd}>
           + Add service
@@ -166,6 +220,7 @@ export function Sidebar(props: Props) {
           <li className="service-item empty-item">No services. Click "Add service".</li>
         )}
       </ul>
+      <div className="sidebar-footer">v1.0.0</div>
       <div className="sidebar-resizer" onMouseDown={startDrag} title="Drag to resize" />
     </aside>
   );

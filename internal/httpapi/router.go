@@ -18,7 +18,13 @@ func (a *API) Router(spa fs.FS) http.Handler {
 		r.Post("/services/reorder", a.reorderServices)
 		r.Get("/services/export", a.exportServices)
 		r.Post("/services/import", a.importServices)
+		r.Get("/shortcuts", a.getShortcuts)
+		r.Put("/shortcuts", a.putShortcuts)
+		r.Get("/settings", a.getSettings)
+		r.Put("/settings", a.putSettings)
+		r.Get("/terminals", a.listTerminals)
 		r.Post("/pick-folder", a.pickFolder)
+		r.Post("/pick-app", a.pickApp)
 		r.Route("/services/{id}", func(r chi.Router) {
 			r.Get("/", a.getService)
 			r.Put("/", a.updateService)

@@ -1,9 +1,7 @@
 node_modules
 web/dist
-dev-dashboard
-data/services.json
-data/services.json.tmp
+mux
+dist/
 .next
 *.log
 .DS_Store
-

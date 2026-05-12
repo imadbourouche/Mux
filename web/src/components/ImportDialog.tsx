@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Service } from "../lib/types";
+import { useEscKey } from "../hooks/useEscKey";
 
 type Props = {
   onImport: (services: Service[], mode: "merge" | "replace") => Promise<void>;
@@ -7,6 +8,7 @@ type Props = {
 };
 
 export function ImportDialog({ onImport, onCancel }: Props) {
+  useEscKey(onCancel);
   const [services, setServices] = useState<Service[] | null>(null);
   const [filename, setFilename] = useState<string>("");
   const [error, setError] = useState<string | null>(null);

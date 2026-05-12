@@ -9,6 +9,33 @@ import { ConfirmDialog } from "./ConfirmDialog";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { ProfileSelector } from "./ProfileSelector";
 
+function VSCodeIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M23.15 2.587 18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 14.861L10.826 12l7.178-5.448z" />
+    </svg>
+  );
+}
+
+function TerminalIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="4 17 10 11 4 5" />
+      <line x1="12" y1="19" x2="20" y2="19" />
+    </svg>
+  );
+}
+
+function ExternalLinkIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginLeft: 4, verticalAlign: "middle" }}>
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
+  );
+}
+
 type Props = {
   service: Service;
   allServices: Service[];
@@ -207,6 +234,12 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
       <div className="detail-header">
         <span className={`status-dot ${status}`} />
         <h2>{service.name || "(unnamed)"}</h2>
+        <button onClick={openVSCode} className="open-btn" title="Open project in VSCode">
+          Open in <VSCodeIcon />
+        </button>
+        <button onClick={openTerminal} className="open-btn" title="Open Terminal.app in project folder">
+          Open in <TerminalIcon />
+        </button>
         <span className={`status-badge ${status}`}>{status}</span>
         {state?.pid ? <span className="hint">pid {state.pid}</span> : null}
         <span className={`save-indicator ${saveStatus}`}>
@@ -227,20 +260,19 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
                 target="_blank"
                 rel="noopener noreferrer"
                 className="port-chip"
-                title={`Open http://localhost:${p}`}
+                title={`Open http://localhost:${p} in a new tab`}
               >
                 :{p}
+                <ExternalLinkIcon />
               </a>
             ))}
           </div>
         )}
         <span className="spacer" />
-        <button onClick={openVSCode}>Open in VSCode</button>
-        <button onClick={openTerminal}>Open Terminal</button>
         <button className="action-start" onClick={startSvc} disabled={running} title="Start">
           ▶ Start
         </button>
-        <button className="action-restart" onClick={restartSvc} disabled={!running} title="Restart (Cmd+R)">
+        <button className="action-restart" onClick={restartSvc} disabled={!running} title="Restart">
           ↻ Restart
         </button>
         <button className="action-stop" onClick={stopSvc} disabled={!running} title="Stop">
@@ -269,21 +301,18 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
             <input value={command} onChange={(e) => setCommand(e.target.value)} />
           </div>
         </CollapsibleSection>
-        <div className="section">
-          <div className="section-body">
-            <h3 style={{ marginTop: 0 }}>Profile</h3>
-            <p className="hint" style={{ marginBottom: 12 }}>
-              Each profile is a named variant of arguments and environment variables. Only the
-              active profile is applied at start.
-            </p>
-            <ProfileSelector
-              profiles={profiles}
-              active={activeProfile}
-              onActiveChange={setActiveProfile}
-              onProfilesChange={onProfilesChange}
-            />
-          </div>
-        </div>
+        <CollapsibleSection
+          title={`Profile · ${activeProfile}`}
+          hint="Each profile is a named variant of arguments and environment variables. Only the active profile is applied at start."
+          defaultOpen
+        >
+          <ProfileSelector
+            profiles={profiles}
+            active={activeProfile}
+            onActiveChange={setActiveProfile}
+            onProfilesChange={onProfilesChange}
+          />
+        </CollapsibleSection>
         <ArgsEditor value={active?.args ?? []} onChange={setActiveArgs} sources={argsSources} />
         <EnvEditor value={active?.env ?? []} onChange={setActiveEnv} sources={envSources} />
         <div className="section">

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Service } from "../lib/types";
 import { api } from "../lib/api";
+import { useEscKey } from "../hooks/useEscKey";
 
 type Props = {
   onCancel: () => void;
@@ -13,6 +14,7 @@ function basename(p: string): string {
 }
 
 export function AddServiceForm({ onCancel, onCreate }: Props) {
+  useEscKey(onCancel);
   const [name, setName] = useState("");
   const [cwd, setCwd] = useState("");
   const [submitting, setSubmitting] = useState(false);

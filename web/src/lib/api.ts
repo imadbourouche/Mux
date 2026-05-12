@@ -63,4 +63,16 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ services, mode }),
     }).then((r) => json<{ services: Service[] }>(r)),
+  getSettings: () =>
+    fetch("/api/settings").then((r) => json<{ terminal: string }>(r)),
+  putSettings: (settings: { terminal: string }) =>
+    fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settings),
+    }).then((r) => json<{ terminal: string }>(r)),
+  listTerminals: () =>
+    fetch("/api/terminals").then((r) => json<{ installed: string[] }>(r)),
+  pickApp: () =>
+    fetch("/api/pick-app", { method: "POST" }).then((r) => json<{ path: string }>(r)),
 };

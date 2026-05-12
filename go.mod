@@ -1,4 +1,4 @@
-module dev-dashboard
+module mux
 
 go 1.26.3
 
