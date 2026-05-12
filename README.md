@@ -14,53 +14,12 @@ the project in VSCode or Terminal, and detect listening ports automatically.
 
 - macOS (uses `osascript` for the folder picker and Terminal.app, `open -a` for
   VSCode, `lsof` + `pgrep` for port detection)
-- Go 1.22+ (developed against 1.26)
+- Go 1.22+
 - Node 20+ and Yarn 1
 - VSCode installed (optional — only needed for the **Open in VSCode** button)
 
-## Build
-
-```sh
-make build
-```
-
-This bundles the React app to `web/dist`, then compiles a single Go binary
-named `mux` that embeds the SPA via `go:embed`.
-
-To run the production binary:
-
-```sh
-./mux
-```
-
-The server listens on `http://localhost:4000`. Override with `PORT=4001 ./mux`.
-
-Check the version of any binary with `./mux --version`.
-
-## Distributing as a single binary
-
-`make release` cross-compiles a stripped, version-stamped binary for each
-target platform into `dist/`:
-
-```sh
-make release VERSION=v1.0.0
-```
-
-Output:
-
-```
-dist/
-├── mux-darwin-arm64        # Apple Silicon
-└── mux-darwin-amd64        # Intel Macs
-```
-
-If `VERSION` is not provided, `make` falls back to `git describe`, or `dev`
-if outside a git checkout. The value is embedded into the binary and shown
-by `mux --version`.
-
-### Installing the binary (end users)
-
-Pick the binary matching your machine (Apple Silicon = `arm64`, Intel = `amd64`),
+## Installing the binary
+Download the binary matching your machine (Apple Silicon = `arm64`, Intel = `amd64`),
 then:
 
 ```sh
@@ -87,12 +46,25 @@ xattr -d com.apple.quarantine /usr/local/bin/mux
 For wider distribution, sign and notarize the binary with a Developer ID
 certificate — left out of the v1 scope.
 
-### Linux / Windows
+## Build
 
-The current build only ships macOS targets. Mux uses macOS-only tooling
-for the folder picker (`osascript`), launching Terminal.app, and opening
-VSCode via `open -a`. Linux/Windows ports would need replacements for those
-handlers.
+```sh
+make build
+```
+
+This bundles the React app to `web/dist`, then compiles a single Go binary
+named `mux` that embeds the SPA via `go:embed`.
+
+To run the production binary:
+
+```sh
+./mux
+```
+
+The server listens on `http://localhost:4000`. Override with `PORT=4001 ./mux`.
+
+Check the version of any binary with `./mux --version`.
+
 
 ## Dev mode (with hot reload)
 
@@ -111,11 +83,9 @@ All persistent state lives under `~/.mux/data/`:
 
 - `services.json` — service definitions, profiles, args, env vars
 - `shortcuts.json` — your customized keyboard shortcuts
+- `settings.json` — your customized settings
 
 Override the location with `MUX_HOME=/some/path ./mux`.
-
-On first start, Mux automatically migrates a legacy `cwd/data/services.json`
-into `~/.mux/data/services.json` if present.
 
 ## Features
 
@@ -140,32 +110,6 @@ into `~/.mux/data/services.json` if present.
 - **Drag-reorder** services in the sidebar; **resize** the sidebar by its
   right edge; **collapse** to a thin strip with `☰`.
 - **Quick-switch** services with a searchable palette.
-
-## Default keyboard shortcuts
-
-All shortcuts are editable from the **?** button in the sidebar or via
-`⌥ /`. Changes are saved to `~/.mux/data/shortcuts.json`.
-
-| Default | Action                       |
-|---------|------------------------------|
-| ⌥ P     | Quick-switch service         |
-| ⌥ /     | Show keyboard shortcuts      |
-| ⌥ S     | Start focused service        |
-| ⌥ R     | Restart focused service      |
-| ⌥ K     | Stop focused service         |
-| Enter   | Send log input / pick service|
-| Esc     | Close any open dialog        |
-
-## Adding a service
-
-Click **+ Add service** in the sidebar.
-
-- **Import local project…** opens a native folder picker and pre-fills the
-  service name and path.
-- Or fill in **Name** and **Path** manually.
-
-You can configure the command, arguments, and env vars after creation in the
-detail pane.
 
 ## Notes
 
