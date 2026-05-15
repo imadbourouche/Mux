@@ -213,6 +213,31 @@ func (a *API) pickFolder(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, 200, map[string]string{"path": path})
 }
 
+func (a *API) gitBranch(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	s, err := a.Store.Get(id)
+	if err != nil {
+		writeError(w, 404, err.Error())
+		return
+	}
+	if s.Cwd == "" {
+		writeJSON(w, 200, map[string]string{"branch": ""})
+		return
+	}
+	out, err := exec.Command("git", "-C", s.Cwd, "rev-parse", "--abbrev-ref", "HEAD").Output()
+	if err != nil {
+		writeJSON(w, 200, map[string]string{"branch": ""})
+		return
+	}
+	branch := strings.TrimSpace(string(out))
+	if branch == "HEAD" {
+		if sha, err := exec.Command("git", "-C", s.Cwd, "rev-parse", "--short", "HEAD").Output(); err == nil {
+			branch = strings.TrimSpace(string(sha))
+		}
+	}
+	writeJSON(w, 200, map[string]string{"branch": branch})
+}
+
 func (a *API) openInVSCode(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	s, err := a.Store.Get(id)

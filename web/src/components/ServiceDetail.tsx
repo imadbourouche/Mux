@@ -46,6 +46,7 @@ type Props = {
 type SaveStatus = "saved" | "pending" | "saving" | "error";
 
 const SAVE_DELAY_MS = 500;
+const BRANCH_TRUNCATE_AT = 20;
 
 function trimArgs(args: Arg[]): Arg[] {
   return args.map((a) => ({ ...a, value: a.value.trim() }));
@@ -54,13 +55,13 @@ function trimEnv(env: EnvVar[]): EnvVar[] {
   return env.map((e) => ({ ...e, key: e.key.trim(), value: e.value.trim() }));
 }
 
-function snapshot(svc: { name: string; cwd: string; command: string; profiles: Profile[]; activeProfile: string }) {
+function snapshot(svc: { name: string; cwd: string; profiles: Profile[]; activeProfile: string }) {
   return JSON.stringify({
     name: svc.name.trim(),
     cwd: svc.cwd.trim(),
-    command: svc.command.trim(),
     profiles: svc.profiles.map((p) => ({
       name: p.name,
+      command: (p.command ?? "").trim(),
       args: trimArgs(p.args),
       env: trimEnv(p.env),
     })),
@@ -71,11 +72,12 @@ function snapshot(svc: { name: string; cwd: string; command: string; profiles: P
 export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Props) {
   const [name, setName] = useState(service.name);
   const [cwd, setCwd] = useState(service.cwd);
-  const [command, setCommand] = useState(service.command);
   const [profiles, setProfiles] = useState<Profile[]>(service.profiles);
   const [activeProfile, setActiveProfile] = useState(service.activeProfile);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [branch, setBranch] = useState<string>("");
+  const [branchExpanded, setBranchExpanded] = useState(false);
 
   const lastSavedRef = useRef<string>(snapshot(service));
   const savingRef = useRef<boolean>(false);
@@ -85,7 +87,6 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
   useEffect(() => {
     setName(service.name);
     setCwd(service.cwd);
-    setCommand(service.command);
     setProfiles(service.profiles);
     setActiveProfile(service.activeProfile);
     lastSavedRef.current = snapshot(service);
@@ -93,10 +94,25 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
   }, [service.id]);
 
   useEffect(() => {
-    lastSavedRef.current = snapshot(service);
-  }, [service.name, service.cwd, service.command, service.profiles, service.activeProfile]);
+    let cancelled = false;
+    setBranch("");
+    setBranchExpanded(false);
+    if (!service.cwd) return;
+    api.branch(service.id)
+      .then(({ branch }) => {
+        if (!cancelled) setBranch(branch);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [service.id, service.cwd]);
 
-  const currentForm = snapshot({ name, cwd, command, profiles, activeProfile });
+  useEffect(() => {
+    lastSavedRef.current = snapshot(service);
+  }, [service.name, service.cwd, service.profiles, service.activeProfile]);
+
+  const currentForm = snapshot({ name, cwd, profiles, activeProfile });
   const dirty = currentForm !== lastSavedRef.current;
 
   const saveNow = useCallback(async (): Promise<boolean> => {
@@ -107,9 +123,9 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
       const updated = await api.update(service.id, {
         name: name.trim(),
         cwd: cwd.trim(),
-        command: command.trim(),
         profiles: profiles.map((p) => ({
           name: p.name,
+          command: (p.command ?? "").trim(),
           args: trimArgs(p.args),
           env: trimEnv(p.env),
         })),
@@ -117,7 +133,6 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
       });
       setName(updated.name);
       setCwd(updated.cwd);
-      setCommand(updated.command);
       setProfiles(updated.profiles);
       setActiveProfile(updated.activeProfile);
       lastSavedRef.current = snapshot(updated);
@@ -130,7 +145,7 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
     } finally {
       savingRef.current = false;
     }
-  }, [service.id, name, cwd, command, profiles, activeProfile, onUpdated]);
+  }, [service.id, name, cwd, profiles, activeProfile, onUpdated]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -198,6 +213,9 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
   function setActiveEnv(env: EnvVar[]) {
     setProfiles(profiles.map((p) => (p.name === activeProfile ? { ...p, env } : p)));
   }
+  function setActiveCommand(cmd: string) {
+    setProfiles(profiles.map((p) => (p.name === activeProfile ? { ...p, command: cmd } : p)));
+  }
   function onProfilesChange(next: Profile[], newActive: string) {
     setProfiles(next);
     setActiveProfile(newActive);
@@ -233,7 +251,29 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
     <section className="detail">
       <div className="detail-header">
         <span className={`status-dot ${status}`} />
-        <h2>{service.name || "(unnamed)"}</h2>
+        <h2>
+          {service.name || "(unnamed)"}
+          {branch && (
+            <span className="branch-tag" title="Current git branch">
+              {" ("}
+              {branchExpanded || branch.length <= BRANCH_TRUNCATE_AT
+                ? branch
+                : branch.slice(0, BRANCH_TRUNCATE_AT) + "…"}
+              {branch.length > BRANCH_TRUNCATE_AT && (
+                <button
+                  type="button"
+                  className="branch-toggle"
+                  onClick={() => setBranchExpanded((v) => !v)}
+                  title={branchExpanded ? "Collapse branch name" : "Show full branch name"}
+                  aria-label={branchExpanded ? "Collapse branch name" : "Show full branch name"}
+                >
+                  {branchExpanded ? "<" : ">"}
+                </button>
+              )}
+              {")"}
+            </span>
+          )}
+        </h2>
         <button onClick={openVSCode} className="open-btn" title="Open project in VSCode">
           Open in <VSCodeIcon />
         </button>
@@ -285,7 +325,7 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
       <div className="detail-body">
         <CollapsibleSection
           title="Configuration"
-          hint="Name, working directory, and the base command used to launch the service."
+          hint="Name and working directory of the service."
           defaultOpen
         >
           <div className="row">
@@ -296,14 +336,10 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
             <label>Path</label>
             <input value={cwd} onChange={(e) => setCwd(e.target.value)} />
           </div>
-          <div className="row">
-            <label>Command</label>
-            <input value={command} onChange={(e) => setCommand(e.target.value)} />
-          </div>
         </CollapsibleSection>
         <CollapsibleSection
           title={`Profile · ${activeProfile}`}
-          hint="Each profile is a named variant of arguments and environment variables. Only the active profile is applied at start."
+          hint="Each profile is a named variant of command, arguments, and environment variables. Only the active profile is applied at start."
           defaultOpen
         >
           <ProfileSelector
@@ -312,6 +348,14 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
             onActiveChange={setActiveProfile}
             onProfilesChange={onProfilesChange}
           />
+          <div className="row" style={{ marginTop: 16 }}>
+            <label>Command</label>
+            <input
+              value={active?.command ?? ""}
+              onChange={(e) => setActiveCommand(e.target.value)}
+              placeholder='e.g. "yarn dev"'
+            />
+          </div>
         </CollapsibleSection>
         <ArgsEditor value={active?.args ?? []} onChange={setActiveArgs} sources={argsSources} />
         <EnvEditor value={active?.env ?? []} onChange={setActiveEnv} sources={envSources} />

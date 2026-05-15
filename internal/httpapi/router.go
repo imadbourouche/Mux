@@ -33,6 +33,7 @@ func (a *API) Router(spa fs.FS) http.Handler {
 			r.Post("/stop", a.stopService)
 			r.Post("/restart", a.restartService)
 			r.Post("/input", a.inputService)
+			r.Get("/branch", a.gitBranch)
 			r.Post("/open-in-vscode", a.openInVSCode)
 			r.Post("/open-in-terminal", a.openInTerminal)
 			r.Delete("/logs", a.clearLogs)

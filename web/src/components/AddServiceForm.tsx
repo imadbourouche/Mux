@@ -44,8 +44,7 @@ export function AddServiceForm({ onCancel, onCreate }: Props) {
       await onCreate({
         name: name.trim(),
         cwd: cwd.trim(),
-        command: "",
-        profiles: [{ name: "default", args: [], env: [] }],
+        profiles: [{ name: "default", command: "", args: [], env: [] }],
         activeProfile: "default",
       });
     } catch (err) {

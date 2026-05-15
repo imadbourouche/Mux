@@ -22,6 +22,7 @@ export function ProfileSelector({ profiles, active, onActiveChange, onProfilesCh
     const current = profiles.find((p) => p.name === active);
     const next: Profile = {
       name,
+      command: current?.command ?? "",
       args: current ? current.args.map((a) => ({ ...a })) : [],
       env: current ? current.env.map((e) => ({ ...e })) : [],
     };

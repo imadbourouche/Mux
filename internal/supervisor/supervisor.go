@@ -179,7 +179,7 @@ func (s *slot) appendSystemLine(text string) {
 
 func buildCommand(svc store.Service) string {
 	p := svc.ActiveOrFirst()
-	parts := []string{svc.Command}
+	parts := []string{p.Command}
 	for _, a := range p.Args {
 		if a.Enabled && strings.TrimSpace(a.Value) != "" {
 			parts = append(parts, a.Value)
@@ -222,14 +222,13 @@ func (sv *Supervisor) Start(id string) (State, error) {
 		s.setState(st)
 		return st, nil
 	}
-	if strings.TrimSpace(svc.Command) == "" {
+	cmdline := buildCommand(svc)
+	if strings.TrimSpace(cmdline) == "" {
 		s.appendSystemLine("error: command is empty")
 		st := State{Status: StatusCrashed}
 		s.setState(st)
 		return st, nil
 	}
-
-	cmdline := buildCommand(svc)
 	s.appendSystemLine(fmt.Sprintf("starting: %s  (cwd: %s)  (profile: %s)", cmdline, svc.Cwd, svc.ActiveProfile))
 
 	cmd := exec.Command("/bin/sh", "-c", cmdline)

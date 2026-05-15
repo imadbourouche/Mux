@@ -1,6 +1,6 @@
 export type EnvVar = { key: string; value: string; enabled: boolean };
 export type Arg = { value: string; enabled: boolean };
-export type Profile = { name: string; args: Arg[]; env: EnvVar[] };
+export type Profile = { name: string; command: string; args: Arg[]; env: EnvVar[] };
 export type ServiceStatus = "stopped" | "running" | "crashed";
 export type ServiceState = {
   status: ServiceStatus;
@@ -13,7 +13,6 @@ export type Service = {
   id: string;
   name: string;
   cwd: string;
-  command: string;
   profiles: Profile[];
   activeProfile: string;
   pinned?: boolean;

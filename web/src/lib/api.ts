@@ -75,4 +75,6 @@ export const api = {
     fetch("/api/terminals").then((r) => json<{ installed: string[] }>(r)),
   pickApp: () =>
     fetch("/api/pick-app", { method: "POST" }).then((r) => json<{ path: string }>(r)),
+  branch: (id: string) =>
+    fetch(`/api/services/${id}/branch`).then((r) => json<{ branch: string }>(r)),
 };

@@ -23,23 +23,20 @@ type Arg struct {
 }
 
 type Profile struct {
-	Name string   `json:"name"`
-	Args []Arg    `json:"args"`
-	Env  []EnvVar `json:"env"`
+	Name    string   `json:"name"`
+	Command string   `json:"command,omitempty"`
+	Args    []Arg    `json:"args"`
+	Env     []EnvVar `json:"env"`
 }
 
 type Service struct {
 	ID            string    `json:"id"`
 	Name          string    `json:"name"`
 	Cwd           string    `json:"cwd"`
-	Command       string    `json:"command"`
 	Profiles      []Profile `json:"profiles"`
 	ActiveProfile string    `json:"activeProfile"`
 	Pinned        bool      `json:"pinned"`
 	Order         int       `json:"order"`
-	// legacy fields kept only for backward compatibility on read
-	Args []Arg    `json:"args,omitempty"`
-	Env  []EnvVar `json:"env,omitempty"`
 }
 
 type Config struct {
@@ -89,28 +86,9 @@ func normalize(c *Config) bool {
 	}
 	for i := range c.Services {
 		svc := &c.Services[i]
-		if svc.Profiles == nil {
-			svc.Profiles = []Profile{}
-		}
 		if len(svc.Profiles) == 0 {
-			args := svc.Args
-			env := svc.Env
-			if args == nil {
-				args = []Arg{}
-			}
-			if env == nil {
-				env = []EnvVar{}
-			}
-			svc.Profiles = []Profile{{Name: "default", Args: args, Env: env}}
+			svc.Profiles = []Profile{{Name: "default", Args: []Arg{}, Env: []EnvVar{}}}
 			svc.ActiveProfile = "default"
-			svc.Args = nil
-			svc.Env = nil
-			changed = true
-		}
-		// always strip legacy fields from in-memory copy
-		if svc.Args != nil || svc.Env != nil {
-			svc.Args = nil
-			svc.Env = nil
 			changed = true
 		}
 		for pi := range svc.Profiles {
@@ -353,18 +331,8 @@ func (s *Store) ImportServices(incoming []Service, replace bool) ([]Service, err
 			sv.ID = uuid.NewString()
 		}
 		if len(sv.Profiles) == 0 {
-			args := sv.Args
-			env := sv.Env
-			if args == nil {
-				args = []Arg{}
-			}
-			if env == nil {
-				env = []EnvVar{}
-			}
-			sv.Profiles = []Profile{{Name: "default", Args: args, Env: env}}
+			sv.Profiles = []Profile{{Name: "default", Args: []Arg{}, Env: []EnvVar{}}}
 			sv.ActiveProfile = "default"
-			sv.Args = nil
-			sv.Env = nil
 		}
 		maxOrder++
 		sv.Order = maxOrder
