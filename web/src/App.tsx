@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Sidebar } from "./components/Sidebar";
+import { GlobalHeader } from "./components/GlobalHeader";
 import { ServiceDetail } from "./components/ServiceDetail";
 import { AddServiceForm } from "./components/AddServiceForm";
 import { QuickSwitch } from "./components/QuickSwitch";
 import { ImportDialog } from "./components/ImportDialog";
-import { ConfirmDialog } from "./components/ConfirmDialog";
+import { ExportDialog } from "./components/ExportDialog";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { api } from "./lib/api";
 import { useTheme } from "./hooks/useTheme";
@@ -20,7 +21,7 @@ export function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [confirmExport, setConfirmExport] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [quickSwitchOpen, setQuickSwitchOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [theme, setTheme] = useTheme();
@@ -90,14 +91,6 @@ export function App() {
     }
   }
 
-  function exportNow() {
-    setConfirmExport(false);
-    const a = document.createElement("a");
-    a.href = api.exportUrl();
-    a.download = "services.json";
-    a.click();
-  }
-
   async function onImport(servicesIn: Service[], mode: "merge" | "replace") {
     await api.importServices(servicesIn, mode);
     setImporting(false);
@@ -135,55 +128,52 @@ export function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [bindings, selectedId, load]);
 
-  const gridCols = sidebarCollapsed ? "40px 1fr" : `${sidebarWidth}px 1fr`;
+  const gridCols = sidebarCollapsed ? "1fr" : `${sidebarWidth}px 1fr`;
 
   return (
-    <div className="layout" style={{ gridTemplateColumns: gridCols }}>
-      <Sidebar
-        services={services}
-        selectedId={selectedId}
-        collapsed={sidebarCollapsed}
-        width={sidebarWidth}
-        onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
-        onWidthChange={setSidebarWidth}
-        onSelect={setSelectedId}
-        onAdd={() => setAdding(true)}
-        onStartAll={() => api.startAll().then(load)}
-        onStopAll={() => api.stopAll().then(load)}
-        onServiceAction={serviceAction}
-        onReorder={onReorder}
-        onExport={() => setConfirmExport(true)}
-        onImport={() => setImporting(true)}
+    <div className="app-shell">
+      <GlobalHeader
         onShowSettings={() => setSettingsOpen(true)}
+        onToggleSidebar={() => setSidebarCollapsed((v) => !v)}
         theme={theme}
         onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
       />
-      {selected ? (
-        <ServiceDetail
-          key={selected.id}
-          service={selected}
-          allServices={services}
-          onUpdated={onUpdated}
-          onDeleted={onDeleted}
-        />
-      ) : (
-        <section className="detail">
-          <div className="empty">Select or add a service</div>
-        </section>
-      )}
+      <div className="layout" style={{ gridTemplateColumns: gridCols }}>
+        {!sidebarCollapsed && (
+          <Sidebar
+            services={services}
+            selectedId={selectedId}
+            width={sidebarWidth}
+            onWidthChange={setSidebarWidth}
+            onSelect={setSelectedId}
+            onAdd={() => setAdding(true)}
+            onStartAll={() => api.startAll().then(load)}
+            onStopAll={() => api.stopAll().then(load)}
+            onImport={() => setImporting(true)}
+            onExport={() => setExportOpen(true)}
+            onServiceAction={serviceAction}
+            onReorder={onReorder}
+          />
+        )}
+        {selected ? (
+          <ServiceDetail
+            key={selected.id}
+            service={selected}
+            allServices={services}
+            onUpdated={onUpdated}
+            onDeleted={onDeleted}
+          />
+        ) : (
+          <section className="detail">
+            <div className="empty">Select or add a service</div>
+          </section>
+        )}
+      </div>
       {adding && <AddServiceForm onCancel={() => setAdding(false)} onCreate={onCreate} />}
       {importing && (
         <ImportDialog onCancel={() => setImporting(false)} onImport={onImport} />
       )}
-      {confirmExport && (
-        <ConfirmDialog
-          title="Export services?"
-          message="This downloads services.json with every service's commands, args, env vars, and paths. Env vars and arg values may include secrets — only save it somewhere you trust."
-          confirmLabel="Download"
-          onConfirm={exportNow}
-          onCancel={() => setConfirmExport(false)}
-        />
-      )}
+      {exportOpen && <ExportDialog onCancel={() => setExportOpen(false)} />}
       {quickSwitchOpen && (
         <QuickSwitch
           services={services}

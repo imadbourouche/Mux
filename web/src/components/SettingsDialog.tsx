@@ -86,10 +86,6 @@ export function SettingsDialog({ bindings, onChange, onReset, onCancel }: Props)
 
         <div className="settings-block">
           <h3 className="settings-h3">Default terminal</h3>
-          <p className="hint" style={{ marginBottom: 10 }}>
-            Used by "Open in Terminal". Click <b>Choose application…</b> to browse
-            <code>/Applications</code> and pick any <code>.app</code> bundle.
-          </p>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ flex: 1, fontFamily: "ui-monospace, Menlo, monospace", fontSize: 12 }}>
               {terminal ? (
@@ -114,9 +110,6 @@ export function SettingsDialog({ bindings, onChange, onReset, onCancel }: Props)
 
         <div className="settings-block">
           <h3 className="settings-h3">Keyboard shortcuts</h3>
-          <p className="hint" style={{ marginBottom: 10 }}>
-            Click a binding to record a new key combo. On macOS use ⌘/⌥; on Linux/Windows use Ctrl/Alt.
-          </p>
           <table className="shortcuts-table">
             <tbody>
               <tr>

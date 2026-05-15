@@ -26,6 +26,17 @@ function TerminalIcon() {
   );
 }
 
+function TrashIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+    </svg>
+  );
+}
+
 function ExternalLinkIcon() {
   return (
     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginLeft: 4, verticalAlign: "middle" }}>
@@ -46,7 +57,7 @@ type Props = {
 type SaveStatus = "saved" | "pending" | "saving" | "error";
 
 const SAVE_DELAY_MS = 500;
-const BRANCH_TRUNCATE_AT = 20;
+const BRANCH_TRUNCATE_AT = 15;
 
 function trimArgs(args: Arg[]): Arg[] {
   return args.map((a) => ({ ...a, value: a.value.trim() }));
@@ -318,15 +329,12 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
         <button className="action-stop" onClick={stopSvc} disabled={!running} title="Stop">
           ■ Stop
         </button>
-        <button className="danger-ghost" onClick={() => setConfirmDelete(true)}>
-          Delete
-        </button>
       </div>
       <div className="detail-body">
         <CollapsibleSection
           title="Configuration"
           hint="Name and working directory of the service."
-          defaultOpen
+          defaultOpen={false}
         >
           <div className="row">
             <label>Name</label>
@@ -338,17 +346,19 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
           </div>
         </CollapsibleSection>
         <CollapsibleSection
-          title={`Profile · ${activeProfile}`}
+          title="Profile"
           hint="Each profile is a named variant of command, arguments, and environment variables. Only the active profile is applied at start."
           defaultOpen
+          rightSlot={
+            <ProfileSelector
+              profiles={profiles}
+              active={activeProfile}
+              onActiveChange={setActiveProfile}
+              onProfilesChange={onProfilesChange}
+            />
+          }
         >
-          <ProfileSelector
-            profiles={profiles}
-            active={activeProfile}
-            onActiveChange={setActiveProfile}
-            onProfilesChange={onProfilesChange}
-          />
-          <div className="row" style={{ marginTop: 16 }}>
+          <div className="row">
             <label>Command</label>
             <input
               value={active?.command ?? ""}
@@ -356,14 +366,27 @@ export function ServiceDetail({ service, allServices, onUpdated, onDeleted }: Pr
               placeholder='e.g. "yarn dev"'
             />
           </div>
+          <ArgsEditor value={active?.args ?? []} onChange={setActiveArgs} sources={argsSources} />
+          <EnvEditor value={active?.env ?? []} onChange={setActiveEnv} sources={envSources} />
         </CollapsibleSection>
-        <ArgsEditor value={active?.args ?? []} onChange={setActiveArgs} sources={argsSources} />
-        <EnvEditor value={active?.env ?? []} onChange={setActiveEnv} sources={envSources} />
         <div className="section">
           <div className="section-body">
             <LogsTab logs={logs} running={running} onClear={clearLogs} onSendInput={sendInput} />
           </div>
         </div>
+        <CollapsibleSection
+          title="Danger zone"
+          hint="Permanently remove this service from the dashboard."
+          defaultOpen={false}
+        >
+          <button
+            className="danger-ghost danger-zone-btn"
+            onClick={() => setConfirmDelete(true)}
+            title="Delete service"
+          >
+            <TrashIcon /> Delete service
+          </button>
+        </CollapsibleSection>
       </div>
       {confirmDelete && (
         <ConfirmDialog

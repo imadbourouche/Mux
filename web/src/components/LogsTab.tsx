@@ -2,6 +2,26 @@ import { useEffect, useRef, useState } from "react";
 import type { LogLine } from "../lib/types";
 import { renderAnsi } from "../lib/ansi";
 
+function EyeIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a19.77 19.77 0 0 1 5.06-5.94" />
+      <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a19.86 19.86 0 0 1-3.17 4.19" />
+      <path d="M14.12 14.12A3 3 0 1 1 9.88 9.88" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
 type Props = {
   logs: LogLine[];
   running: boolean;
@@ -110,6 +130,16 @@ export function LogsTab({ logs, running, onClear, onSendInput }: Props) {
         </table>
       </div>
       <div className="input-bar">
+        <button
+          type="button"
+          className="icon-btn mask-toggle"
+          onClick={() => setMask((m) => !m)}
+          title={mask ? "Show input" : "Hide input (mask for passwords)"}
+          aria-label={mask ? "Show input" : "Hide input"}
+          aria-pressed={mask}
+        >
+          {mask ? <EyeOffIcon /> : <EyeIcon />}
+        </button>
         <input
           type={mask ? "password" : "text"}
           value={input}
@@ -122,10 +152,6 @@ export function LogsTab({ logs, running, onClear, onSendInput }: Props) {
           }
           disabled={!running}
         />
-        <label className="checkbox-label" title="Mask input (for passwords)">
-          <input type="checkbox" checked={mask} onChange={(e) => setMask(e.target.checked)} />
-          mask
-        </label>
         <button onClick={send} disabled={!running} className="primary">
           Send
         </button>

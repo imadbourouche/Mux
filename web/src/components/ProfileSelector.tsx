@@ -55,7 +55,6 @@ export function ProfileSelector({ profiles, active, onActiveChange, onProfilesCh
 
   return (
     <div className="profile-selector">
-      <label className="hint" style={{ width: "auto" }}>Profile</label>
       {renaming ? (
         <input
           type="text"

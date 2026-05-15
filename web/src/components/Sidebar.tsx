@@ -1,28 +1,41 @@
 import { useEffect, useRef, useState } from "react";
 import type { Service, ServiceStatus } from "../lib/types";
-import type { Theme } from "../hooks/useTheme";
 
 type Action = "start" | "restart" | "stop";
 
 type Props = {
   services: Service[];
   selectedId: string | null;
-  collapsed: boolean;
   width: number;
-  onToggleCollapsed: () => void;
   onWidthChange: (w: number) => void;
   onSelect: (id: string) => void;
   onAdd: () => void;
   onStartAll: () => void;
   onStopAll: () => void;
+  onImport: () => void;
+  onExport: () => void;
   onServiceAction: (id: string, action: Action) => void;
   onReorder: (orderedIds: string[]) => void;
-  onExport: () => void;
-  onImport: () => void;
-  onShowSettings: () => void;
-  theme: Theme;
-  onToggleTheme: () => void;
 };
+
+function ImportIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  );
+}
+
+function JsonIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M8 3H6a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h2" />
+      <path d="M16 3h2a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-2" />
+    </svg>
+  );
+}
 
 const MIN_WIDTH = 220;
 const MAX_WIDTH = 520;
@@ -31,21 +44,16 @@ export function Sidebar(props: Props) {
   const {
     services,
     selectedId,
-    collapsed,
     width,
-    onToggleCollapsed,
     onWidthChange,
     onSelect,
     onAdd,
     onStartAll,
     onStopAll,
+    onImport,
+    onExport,
     onServiceAction,
     onReorder,
-    onExport,
-    onImport,
-    onShowSettings,
-    theme,
-    onToggleTheme,
   } = props;
 
   const draggingRef = useRef(false);
@@ -140,45 +148,14 @@ export function Sidebar(props: Props) {
     onReorder(next);
   }
 
-  if (collapsed) {
-    return (
-      <aside className="sidebar collapsed">
-        <button
-          className="icon-btn collapse-btn"
-          onClick={onToggleCollapsed}
-          title="Expand sidebar"
-        >
-          ☰
-        </button>
-      </aside>
-    );
-  }
   void width;
 
   return (
     <aside className="sidebar" style={{ width }}>
       <div className="sidebar-header">
-        <div className="row-between">
-          <div className="brand">
-            <img src="/favicon.svg" alt="" className="brand-logo" />
-            <h1>Mux</h1>
-          </div>
-          <div style={{ display: "flex", gap: 4 }}>
-            <button
-              className="icon-btn settings-btn"
-              onClick={onShowSettings}
-              title="Settings (⌥/)"
-            >
-              ⚙
-            </button>
-            <button className="icon-btn" onClick={onToggleTheme} title="Toggle theme">
-              {theme === "dark" ? "☀" : "☾"}
-            </button>
-            <button className="icon-btn" onClick={onToggleCollapsed} title="Collapse sidebar">
-              ☰
-            </button>
-          </div>
-        </div>
+        <button className="primary" onClick={onAdd}>
+          + Add service
+        </button>
         <div className="sidebar-actions">
           <button
             className={`start-all ${armed === "start" ? "armed" : ""}`}
@@ -192,13 +169,6 @@ export function Sidebar(props: Props) {
           >
             {armed === "stop" ? "Sure to stop all?" : "Stop all"}
           </button>
-        </div>
-        <button className="primary" onClick={onAdd}>
-          + Add service
-        </button>
-        <div className="sidebar-actions">
-          <button onClick={onImport} title="Import services from a file">Import</button>
-          <button onClick={onExport} title="Export current services">Export</button>
         </div>
       </div>
       <ul className="service-list">
@@ -220,7 +190,27 @@ export function Sidebar(props: Props) {
           <li className="service-item empty-item">No services. Click "Add service".</li>
         )}
       </ul>
-      <div className="sidebar-footer">v1.0.0</div>
+      <div className="sidebar-footer">
+        <div className="sidebar-footer-actions">
+          <button
+            className="icon-btn"
+            onClick={onImport}
+            title="Import services from a file"
+            aria-label="Import services"
+          >
+            <ImportIcon />
+          </button>
+          <button
+            className="icon-btn"
+            onClick={onExport}
+            title="Show services.json"
+            aria-label="Show services.json"
+          >
+            <JsonIcon />
+          </button>
+        </div>
+        <span className="sidebar-version">v1.0.0</span>
+      </div>
       <div className="sidebar-resizer" onMouseDown={startDrag} title="Drag to resize" />
     </aside>
   );
